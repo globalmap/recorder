@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Запись звука</title>
+    <link rel="stylesheet" href="style/style.css" />
+</head>
+<body>
+    <div class="container">
+        <div class="circle">
+            <svg width="300" viewBox="0 0 220 220" xmlns="http://www.w3.org/2000/svg">
+                <g transform="translate(110,110)">
+                    <circle r="100" class="e-c-base"/>
+                    <g transform="rotate(-90)">
+                        <circle r="100" class="e-c-progress"/>
+                        <g id="e-pointer">
+                            <circle cx="100" cy="0" r="8" class="e-c-pointer"/>
+                        </g>
+                    </g>
+                </g>
+            </svg>
+        </div>
+        <div id="siri-container"></div>
+        <div class="controlls">
+            <div class="display-remain-time">01:00</div>
+            <button class="play" id="pause"></button>
+        </div>
+    </div>
+   <div id="audioPlayer"></div>
+
+    <script type="module" src="https://unpkg.com/siriwave/dist/siriwave.umd.min.js"></script>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/audio-recorder-polyfill/index.js"></script>
+    <script type="module" src="js/timer.js"></script>
+</body>
+</html>
