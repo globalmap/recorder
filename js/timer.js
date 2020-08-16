@@ -108,7 +108,6 @@ pauseBtn.addEventListener('click', () => {
     // начало записи
     if(pauseBtn.classList.contains("play")) {
         navigator.mediaDevices.getUserMedia({ audio: true, video: false }).then(stream => {
-            alert("Click OK!!")
             recorder = new MediaRecorder(stream)
             document.getElementById("siri-container").style.display = "block";
 
