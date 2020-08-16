@@ -1,7 +1,10 @@
 import AudioRecorder from 'https://cdn.jsdelivr.net/npm/audio-recorder-polyfill/index.js';
 
 window.MediaRecorder = AudioRecorder;
-AudioRecorder.prototype.mimeType= "audio/wav";
+
+if (MediaRecorder.notSupported) {
+    document.getElementsByClassName("container").style.display = "none"
+}
 
 //circle start
 let progressBar = document.querySelector('.e-c-progress');
@@ -84,7 +87,7 @@ function displayTimeLeft (timeLeft){ //displays time on the input
     update(timeLeft, wholeTime);
 }
 
-// настройка Siri Wavw
+// настройка SiriWave
 const siriWave = new SiriWave({
     container: document.getElementById("siri-container"),
     width: 200,
@@ -93,10 +96,13 @@ const siriWave = new SiriWave({
     style: "ios9",
     amplitude: 3,
     speed: 0.3,
-    ratio: 1
+    ratio: 1,
+    autostart: true
 });
 
 
+
+let source = undefined;
 
 pauseBtn.addEventListener('click', () => {
     // начало записи
@@ -108,18 +114,78 @@ pauseBtn.addEventListener('click', () => {
             // Set record to <audio> when recording will be finished
             recorder.addEventListener('dataavailable', e => {
                 audio = URL.createObjectURL(e.data)
-                console.log(audio)
+
                 document.getElementById("audioPlayer")
                     .innerHTML = `<audio src=${audio} controls type="audio/wav">`
+
             })
 
+            let context =  new (window.AudioContext || window.webkitAudioContext)();
+            source = context.createMediaStreamSource(stream);
+            let processor = context.createScriptProcessor(1024, 1, 1);
+            let analyser = context.createAnalyser();
+            analyser.fftSize = 4096;
+            var dataArray = new Float32Array(analyser.frequencyBinCount);
+
+            source.connect(analyser);
+            analyser.connect(processor);
+            processor.connect(context.destination);
+
+            analyser.getFloatFrequencyData(dataArray);
+
+            siriWave.start();
             pauseTimer();
             // Start recording
             recorder.start();
+
+            processor.onaudioprocess = function(e) {
+
+                let amplitude = 0;
+                let frequency = 0;
+
+                //copy frequency data to myDataArray from analyser.
+                analyser.getFloatFrequencyData(dataArray);
+
+                //get max frequency which is greater than -100 dB.
+                dataArray.map((item, index)=>{
+                    let givenFrequencyDB = item;
+
+                    if(givenFrequencyDB>-100){
+                        frequency = Math.max(index,frequency);
+                    }
+                });
+
+                //multipy frequency by resolution and divide it to scale for setting speed.
+                frequency = ((1+frequency)*11.7185)/24000;
+                //set the speed for siriwave
+                siriWave.setSpeed(frequency);
+
+                //find the max amplituded
+                e.inputBuffer.getChannelData(0).map((item)=>{
+                    amplitude = Math.max(amplitude, Math.abs(item));
+                });
+
+                //output buffer data.
+                // console.log(e.outputBuffer.getChannelData(0));
+
+                //scale amplituded from [-1, 1] to [0, 10].
+                amplitude = Math.abs(amplitude*10);
+
+                //if amplitude is greater than 0 then set siriwave amplitude else set to 0.0.
+                if(amplitude>=0){
+                    siriWave.setAmplitude(amplitude);
+                }else{
+                    siriWave.setAmplitude(0.0);
+                }
+
+            };
         })
     } else {
         // конец записи
         recorder.stop()
+        siriWave.setAmplitude(0);
+        siriWave.setSpeed(0);
+        source.disconnect();
         displayTimeLeft(0)
         // Remove “recording” icon from browser tab
         recorder.stream.getTracks().forEach(i => i.stop())
