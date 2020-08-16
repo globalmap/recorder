@@ -122,7 +122,14 @@ pauseBtn.addEventListener('click', () => {
 
             let context =  new (window.AudioContext || window.webkitAudioContext)();
             source = context.createMediaStreamSource(stream);
-            let processor = context.createScriptProcessor(1024, 1, 1);
+             let processor
+            if (context.createJavaScriptNode) {
+                processor = context.createJavaScriptNode(1024, 1, 1);
+            } else if (context.createScriptProcessor) {
+                processor = context.createScriptProcessor(1024, 1, 1);
+            } else {
+                throw 'WebAudio not supported!';
+            }
             let analyser = context.createAnalyser();
             analyser.fftSize = 4096;
             var dataArray = new Float32Array(analyser.frequencyBinCount);
