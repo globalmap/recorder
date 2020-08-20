@@ -93,7 +93,7 @@ const siriWave = new SiriWave({
     width: 200,
     height: 100,
     color: "#000",
-    style: "ios9",
+    style: "ios",
     amplitude: 3,
     speed: 0.3,
     ratio: 1,
